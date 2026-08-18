@@ -31,3 +31,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# BMAD workflow render cache (regenerated per run)
+_bmad/render/
