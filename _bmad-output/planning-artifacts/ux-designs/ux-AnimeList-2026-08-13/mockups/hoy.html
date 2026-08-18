@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Key screen — Hoy / Seguí Viendo</title>
+<style>
+/*
+  Governs this screen:
+  DESIGN.md  -> Colors (surface-*-dark, accent-dark, warning-dark, status colors),
+                Typography (display, heading, body, body-sm, label-caps, numeric),
+                Components (poster-card, status-badge, stale-banner, theme-toggle, empty-state)
+  EXPERIENCE.md -> Information Architecture (Hoy / Seguí Viendo row)
+                    Component Patterns (Poster card, Status badge, Stale banner, Theme toggle)
+                    State Patterns (Hoy vacío, Degradación de sync)
+                    Key Flows -> Flow 1 (Mica revisa qué le toca ver hoy) incl. fallback
+  Three frames below = one file, three states of the same surface, per key-screens.md
+  ("if a surface has a load-bearing alternate state, render it as a second column/section").
+*/
+:root{
+  --surface-base:#0B0C10;
+  --surface-raised:#16181D;
+  --surface-sunken:#07080A;
+  --ink-primary:#F2F1ED;
+  --ink-secondary:#9B9CA3;
+  --ink-disabled:#54565E;
+  --border-hairline:#26282F;
+  --accent:#FF6A47;
+  --accent-fg:#160603;
+  --info:#7FA8DE;
+  --success:#6FBF82;
+  --warning:#E0AC3D;
+  --warning-fg:#1F1400;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--surface-sunken);
+  padding:40px 24px;
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  color:var(--ink-primary);
+  display:flex;
+  flex-wrap:wrap;
+  gap:32px;
+  align-items:flex-start;
+  justify-content:center;
+}
+.frame-wrap{display:flex;flex-direction:column;gap:10px;}
+.frame-label{
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--ink-secondary);
+}
+.phone{
+  width:375px;
+  border:10px solid #000;
+  border-radius:40px;
+  overflow:hidden;
+  background:var(--surface-base);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.phone-notch{
+  height:24px;background:#000;display:flex;align-items:center;justify-content:center;
+}
+.phone-notch::after{content:"";width:80px;height:14px;background:#000;border-radius:0 0 10px 10px;}
+.status-bar{
+  height:28px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-size:12px;color:var(--ink-primary);font-family:'Inter',sans-serif;font-weight:600;
+}
+.app-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;
+}
+.app-title{
+  font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;
+}
+.theme-toggle{
+  width:44px;height:24px;background:var(--surface-sunken);border-radius:9999px;
+  position:relative;flex-shrink:0;
+}
+.theme-toggle::after{
+  content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:9999px;background:var(--accent);
+}
+.app-body{padding:0 16px 16px;min-height:420px;}
+.section-title{
+  font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:22px;font-weight:600;line-height:1.2;
+  margin:8px 0 16px;
+}
+.stale-banner{
+  background:rgba(224,172,61,0.14);
+  color:var(--warning);
+  border-radius:6px;
+  padding:10px 12px;
+  font-size:13px;line-height:1.5;font-weight:600;
+  margin-bottom:16px;
+}
+.card-list{display:flex;flex-direction:column;gap:16px;}
+.poster-card{
+  background:var(--surface-raised);
+  border-radius:10px;
+  overflow:hidden;
+}
+.poster-art{
+  height:96px;position:relative;
+}
+.poster-badge{
+  position:absolute;top:8px;right:8px;
+  background:var(--accent);color:var(--accent-fg);
+  font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  padding:3px 10px;border-radius:9999px;
+}
+.card-body{padding:12px;}
+.card-title{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;line-height:1.3;margin-bottom:6px;}
+.card-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--ink-secondary);}
+.card-next{font-family:'Inter',sans-serif;font-size:15px;font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums;}
+.bottom-nav{
+  display:flex;border-top:1px solid var(--border-hairline);background:var(--surface-raised);
+}
+.bottom-nav div{
+  flex:1;text-align:center;padding:10px 0;font-size:12px;color:var(--ink-secondary);
+}
+.bottom-nav div.active{color:var(--accent);font-weight:600;}
+.empty-state{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  min-height:340px;gap:10px;
+}
+.empty-headline{
+  font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:22px;font-weight:600;line-height:1.2;
+}
+.empty-sub{font-size:15px;line-height:1.6;color:var(--ink-secondary);}
+</style>
+</head>
+<body>
+
+<div class="frame-wrap">
+  <div class="frame-label">Hoy — estado canónico (viendo, 4 animes)</div>
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+    <div class="app-header">
+      <div class="app-title">AnimeTracker</div>
+      <div class="theme-toggle"></div>
+    </div>
+    <div class="app-body">
+      <div class="section-title">Hoy</div>
+      <div class="card-list">
+        <div class="poster-card">
+          <div class="poster-art" style="background:#8A3A2C;">
+            <div class="poster-badge">Viendo</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Kaiju No. 8</div>
+            <div class="card-meta"><span>Visto: Ep 11</span><span class="card-next">Próximo: Ep 12</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <div class="poster-art" style="background:#3B5B48;">
+            <div class="poster-badge">Viendo</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Frieren: Más Allá del Fin del Viaje</div>
+            <div class="card-meta"><span>Visto: Ep 23</span><span class="card-next">Próximo: Ep 24</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <div class="poster-art" style="background:#38455F;">
+            <div class="poster-badge">Viendo</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Dandadan</div>
+            <div class="card-meta"><span>Visto: Ep 8</span><span class="card-next">Próximo: Ep 9</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <div class="poster-art" style="background:#5B3B5F;">
+            <div class="poster-badge">Viendo</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Solo Leveling</div>
+            <div class="card-meta"><span>Visto: Ep 5</span><span class="card-next">Próximo: Ep 6</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="active">Hoy</div><div>Por Estado</div><div>Tendencias</div><div>Config. MAL-Sync</div>
+    </div>
+  </div>
+</div>
+
+<div class="frame-wrap">
+  <div class="frame-label">Variante — degradación de sync (FR-9, stale banner)</div>
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+    <div class="app-header">
+      <div class="app-title">AnimeTracker</div>
+      <div class="theme-toggle"></div>
+    </div>
+    <div class="app-body">
+      <div class="section-title">Hoy</div>
+      <div class="stale-banner">Datos del 12/08, 14:30 — no pudimos sincronizar.</div>
+      <div class="card-list">
+        <div class="poster-card">
+          <div class="poster-art" style="background:#8A3A2C;">
+            <div class="poster-badge">Viendo</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Kaiju No. 8</div>
+            <div class="card-meta"><span>Visto: Ep 11</span><span class="card-next">Próximo: Ep 12</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <div class="poster-art" style="background:#3B5B48;">
+            <div class="poster-badge">Viendo</div>
+          </div>
+          <div class="card-body">
+            <div class="card-title">Frieren: Más Allá del Fin del Viaje</div>
+            <div class="card-meta"><span>Visto: Ep 23</span><span class="card-next">Próximo: Ep 24</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="active">Hoy</div><div>Por Estado</div><div>Tendencias</div><div>Config. MAL-Sync</div>
+    </div>
+  </div>
+</div>
+
+<div class="frame-wrap">
+  <div class="frame-label">Hoy — estado vacío</div>
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+    <div class="app-header">
+      <div class="app-title">AnimeTracker</div>
+      <div class="theme-toggle"></div>
+    </div>
+    <div class="app-body">
+      <div class="section-title">Hoy</div>
+      <div class="empty-state">
+        <div class="empty-headline">Nada en <em>viendo</em> ahora mismo.</div>
+        <div class="empty-sub">Cuando actualices tu lista en AniList, tus animes en curso van a aparecer aquí.</div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="active">Hoy</div><div>Por Estado</div><div>Tendencias</div><div>Config. MAL-Sync</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

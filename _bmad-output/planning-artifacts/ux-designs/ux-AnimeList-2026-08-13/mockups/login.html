@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Key screen — Login y Acceso denegado</title>
+<style>
+/*
+  Governs this screen:
+  DESIGN.md  -> Colors (accent-dark button-primary, ink-secondary-dark supporting text),
+                Typography (display, body, label-caps), Components (button-primary, button-secondary)
+  EXPERIENCE.md -> Information Architecture (Login row, Acceso denegado row)
+                    Voice and Tone ("Tu cuenta de AniList no está habilitada todavía." — Do;
+                    never "Acceso denegado" a secas without the explicit sentence)
+                    State Patterns (Acceso denegado — "página dedicada, mensaje explícito,
+                    sin reintento automático")
+                    Key Flows -> Flow 3 (Vale, nueva usuaria invitada) incl. caso de borde
+                    (OAuth ok, todavía no está en la Whitelist)
+  Two sections in one file, per key-screens.md ("second column/section" allowance).
+*/
+:root{
+  --surface-base:#0B0C10;
+  --surface-raised:#16181D;
+  --surface-sunken:#07080A;
+  --ink-primary:#F2F1ED;
+  --ink-secondary:#9B9CA3;
+  --ink-disabled:#54565E;
+  --border-hairline:#26282F;
+  --accent:#FF6A47;
+  --accent-fg:#160603;
+  --danger:#E36767;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--surface-sunken);
+  padding:40px 24px;
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  color:var(--ink-primary);
+  display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;justify-content:center;
+}
+.frame-wrap{display:flex;flex-direction:column;gap:10px;}
+.frame-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-secondary);}
+.browser{
+  width:480px;border-radius:12px;overflow:hidden;background:var(--surface-base);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.browser-top{height:40px;background:var(--surface-sunken);display:flex;align-items:center;gap:8px;padding:0 14px;}
+.dot{width:10px;height:10px;border-radius:9999px;background:var(--border-hairline);}
+.url{margin-left:12px;background:var(--surface-raised);color:var(--ink-secondary);font-size:12px;padding:5px 14px;border-radius:6px;}
+.stage{
+  min-height:460px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 40px;text-align:center;gap:16px;
+}
+.brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:22px;font-weight:600;margin-bottom:8px;}
+.tag{
+  font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  padding:4px 12px;border-radius:9999px;background:rgba(227,103,103,0.14);color:var(--danger);
+}
+.headline{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:22px;font-weight:600;line-height:1.2;}
+.body-text{font-size:15px;line-height:1.6;color:var(--ink-secondary);max-width:340px;}
+.btn-primary{
+  background:var(--accent);color:var(--accent-fg);border-radius:8px;
+  padding:12px 24px;font-size:15px;font-weight:600;margin-top:8px;
+}
+.btn-secondary{
+  background:transparent;color:var(--ink-primary);border:1px solid var(--border-hairline);
+  border-radius:8px;padding:12px 24px;font-size:15px;font-weight:600;margin-top:8px;
+}
+.fine-print{font-size:13px;color:var(--ink-secondary);margin-top:20px;}
+</style>
+</head>
+<body>
+
+<div class="frame-wrap">
+  <div class="frame-label">Login</div>
+  <div class="browser">
+    <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">animetracker.app</span></div>
+    <div class="stage">
+      <div class="brand">AnimeTracker</div>
+      <div class="body-text">Inicia sesión con tu cuenta de AniList para ver qué estás mirando.</div>
+      <div class="btn-primary">Continuar con AniList</div>
+      <div class="fine-print">Acceso solo por invitación — tu usuario de AniList tiene que estar habilitado.</div>
+    </div>
+  </div>
+</div>
+
+<div class="frame-wrap">
+  <div class="frame-label">Acceso denegado</div>
+  <div class="browser">
+    <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">animetracker.app/acceso-denegado</span></div>
+    <div class="stage">
+      <div class="tag">Acceso denegado</div>
+      <div class="headline">Tu cuenta de AniList no está habilitada todavía.</div>
+      <div class="body-text">Pídele a quien administra AnimeTracker que agregue tu usuario de AniList a la lista de invitados.</div>
+      <div class="btn-secondary">Reintentar inicio de sesión</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

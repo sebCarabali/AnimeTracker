@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Key screen — Configurar MAL-Sync</title>
+<style>
+/*
+  Governs this screen:
+  DESIGN.md  -> Colors (info-dark = onboarding banner, accent-dark = step numerals/button-primary
+                reserved for the primary action out of this flow), Typography (display, display-sm,
+                heading, body, label-caps), Components (onboarding-banner, button-secondary)
+  EXPERIENCE.md -> Information Architecture (Configurar MAL-Sync row — "Nav principal + banner de
+                    onboarding en Hoy si no hay Snapshots aún")
+                    Component Patterns (MAL-Sync onboarding banner — "persiste hasta la primera
+                    sincronización exitosa; enlaza a Configurar MAL-Sync")
+                    State Patterns (Sin Snapshots todavía — "banner de onboarding en vez del
+                    estado vacío genérico")
+                    Key Flows -> Flow 3 (Vale, nueva usuaria invitada), pasos 3-4
+                    FR-10 (documentación de setup de MAL-Sync)
+*/
+:root{
+  --surface-base:#0B0C10;
+  --surface-raised:#16181D;
+  --surface-sunken:#07080A;
+  --ink-primary:#F2F1ED;
+  --ink-secondary:#9B9CA3;
+  --ink-disabled:#54565E;
+  --border-hairline:#26282F;
+  --accent:#FF6A47;
+  --accent-fg:#160603;
+  --info:#7FA8DE;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--surface-sunken);
+  padding:40px 24px;
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  color:var(--ink-primary);
+  display:flex;flex-direction:column;align-items:center;gap:28px;
+}
+.frame-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-secondary);align-self:center;max-width:1040px;width:100%;}
+.browser{
+  width:1040px;border-radius:12px;overflow:hidden;background:var(--surface-base);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.browser-top{height:40px;background:var(--surface-sunken);display:flex;align-items:center;gap:8px;padding:0 14px;}
+.dot{width:10px;height:10px;border-radius:9999px;background:var(--border-hairline);}
+.url{margin-left:12px;background:var(--surface-raised);color:var(--ink-secondary);font-size:12px;padding:5px 14px;border-radius:6px;}
+.app-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border-hairline);}
+.brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;}
+.nav-links{display:flex;gap:32px;font-size:14px;color:var(--ink-secondary);}
+.nav-links .active{color:var(--ink-primary);font-weight:600;}
+.theme-toggle{width:44px;height:24px;background:var(--surface-sunken);border-radius:9999px;position:relative;}
+.theme-toggle::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:9999px;background:var(--accent);}
+.page{padding:32px 48px 64px;}
+.page-title{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-0.01em;margin-bottom:24px;}
+
+.onboarding-banner{
+  background:var(--surface-raised);
+  border-left:3px solid var(--info);
+  border-radius:6px;
+  padding:20px 24px;
+  display:flex;flex-direction:column;gap:8px;
+  max-width:560px;
+}
+.onboarding-head{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;}
+.onboarding-body{font-size:15px;line-height:1.6;color:var(--ink-secondary);}
+.onboarding-link{font-size:14px;font-weight:600;color:var(--info);margin-top:4px;}
+
+.page2 .page-title{margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-secondary);margin-bottom:32px;max-width:560px;line-height:1.6;}
+.steps{display:flex;flex-direction:column;gap:20px;max-width:640px;}
+.step{display:flex;gap:16px;}
+.step-num{
+  flex-shrink:0;width:28px;height:28px;border-radius:9999px;background:var(--accent);color:var(--accent-fg);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;
+}
+.step-title{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:16px;font-weight:600;margin-bottom:4px;}
+.step-body{font-size:14px;line-height:1.6;color:var(--ink-secondary);}
+.note{
+  margin-top:32px;font-size:13px;color:var(--ink-secondary);border-top:1px solid var(--border-hairline);padding-top:20px;max-width:640px;
+}
+.btn-secondary{
+  display:inline-block;margin-top:24px;background:transparent;color:var(--ink-primary);
+  border:1px solid var(--border-hairline);border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;
+}
+</style>
+</head>
+<body>
+
+<div class="frame-label">Hoy — usuario nuevo, sin Snapshots todavía (banner de onboarding)</div>
+<div class="browser">
+  <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">animetracker.app/hoy</span></div>
+  <div class="app-nav">
+    <div class="brand">AnimeTracker</div>
+    <div class="nav-links"><span class="active">Hoy</span><span>Por Estado</span><span>Tendencias</span><span>Configurar MAL-Sync</span></div>
+    <div class="theme-toggle"></div>
+  </div>
+  <div class="page">
+    <div class="page-title">Hoy</div>
+    <div class="onboarding-banner">
+      <div class="onboarding-head">Todavía no sincronizamos tu cuenta.</div>
+      <div class="onboarding-body">Instala y configura MAL-Sync contra tu cuenta de AniList. Apenas corra la primera sincronización, tus animes en <em>viendo</em> van a aparecer aquí.</div>
+      <div class="onboarding-link">Configurar MAL-Sync →</div>
+    </div>
+  </div>
+</div>
+
+<div class="frame-label">Configurar MAL-Sync — instrucciones de instalación (FR-10)</div>
+<div class="browser">
+  <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">animetracker.app/configurar-mal-sync</span></div>
+  <div class="app-nav">
+    <div class="brand">AnimeTracker</div>
+    <div class="nav-links"><span>Hoy</span><span>Por Estado</span><span>Tendencias</span><span class="active">Configurar MAL-Sync</span></div>
+    <div class="theme-toggle"></div>
+  </div>
+  <div class="page page2">
+    <div class="page-title">Configurar MAL-Sync</div>
+    <div class="subtitle">MAL-Sync detecta lo que ves en JKAnime y AnimeFLV y actualiza tu progreso en AniList. AnimeTracker lee ese progreso — no hace falta hacer nada más aquí dentro.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Instala la extensión MAL-Sync</div>
+          <div class="step-body">Disponible para Chrome y Firefox desde la tienda de extensiones del navegador.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Conecta MAL-Sync con tu cuenta de AniList</div>
+          <div class="step-body">Abre la configuración de la extensión y autentica contra AniList — el mismo usuario que usas para iniciar sesión en AnimeTracker.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Mira un episodio en JKAnime o AnimeFLV</div>
+          <div class="step-body">MAL-Sync detecta la reproducción y actualiza el progreso del anime en tu lista de AniList automáticamente.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Vuelve a AnimeTracker</div>
+          <div class="step-body">La próxima sincronización va a reflejar tu progreso en Hoy sin que tengas que hacer nada más.</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Esta página es accesible aunque todavía no tengas ninguna sincronización registrada.</div>
+    <div class="btn-secondary">Volver a Hoy</div>
+  </div>
+</div>
+
+</body>
+</html>

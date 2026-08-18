@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Key screen — Por Estado</title>
+<style>
+/*
+  Governs this screen:
+  DESIGN.md  -> Colors (status-badge color mapping: viendo=accent-dark, completado=success-dark,
+                planeado/repitiendo=info-dark, abandonado=ink-disabled-dark),
+                Typography (display, heading, body-sm, label-caps),
+                Components (poster-card, status-badge, empty-state)
+  EXPERIENCE.md -> Information Architecture (Por Estado row)
+                    Component Patterns (Poster card, Status badge — "un badge por tarjeta,
+                    mapeado 1:1 al Estado de AniList")
+                    State Patterns (Estado filtrado vacío)
+                    Responsive & Platform (nav horizontal >= md, grid 2-4+ columns)
+  Main frame = canonical "viendo" filter. Compact panels below = the other four Estados,
+  demonstrating the full badge color map plus the required empty-state pattern.
+*/
+:root{
+  --surface-base:#0B0C10;
+  --surface-raised:#16181D;
+  --surface-sunken:#07080A;
+  --ink-primary:#F2F1ED;
+  --ink-secondary:#9B9CA3;
+  --ink-disabled:#54565E;
+  --border-hairline:#26282F;
+  --accent:#FF6A47;
+  --accent-fg:#160603;
+  --info:#7FA8DE;
+  --success:#6FBF82;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--surface-sunken);
+  padding:40px 24px;
+  font-family:'Inter','Segoe UI',system-ui,sans-serif;
+  color:var(--ink-primary);
+  display:flex;flex-direction:column;gap:28px;align-items:center;
+}
+.frame-label{
+  font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--ink-secondary);align-self:flex-start;max-width:1040px;width:100%;
+}
+.browser{
+  width:1040px;border-radius:12px;overflow:hidden;background:var(--surface-base);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.browser-top{
+  height:40px;background:var(--surface-sunken);display:flex;align-items:center;gap:8px;padding:0 14px;
+}
+.dot{width:10px;height:10px;border-radius:9999px;background:var(--border-hairline);}
+.url{
+  margin-left:12px;background:var(--surface-raised);color:var(--ink-secondary);font-size:12px;
+  padding:5px 14px;border-radius:6px;
+}
+.app-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 48px;border-bottom:1px solid var(--border-hairline);
+}
+.brand{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;}
+.nav-links{display:flex;gap:32px;font-size:14px;color:var(--ink-secondary);}
+.nav-links .active{color:var(--ink-primary);font-weight:600;}
+.theme-toggle{width:44px;height:24px;background:var(--surface-sunken);border-radius:9999px;position:relative;}
+.theme-toggle::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:9999px;background:var(--accent);}
+.page{padding:32px 48px 48px;}
+.page-title{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-0.01em;margin-bottom:20px;}
+.tabs{display:flex;gap:24px;border-bottom:1px solid var(--border-hairline);margin-bottom:24px;}
+.tab{padding:0 0 12px;font-size:14px;color:var(--ink-secondary);}
+.tab.active{color:var(--ink-primary);font-weight:600;border-bottom:2px solid var(--accent);}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.poster-card{background:var(--surface-raised);border-radius:10px;overflow:hidden;}
+.poster-art{height:110px;position:relative;}
+.badge{position:absolute;top:8px;right:8px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;border-radius:9999px;}
+.badge-viendo{background:var(--accent);color:#160603;}
+.badge-completado{background:var(--success);color:#04170A;}
+.badge-planeado, .badge-repitiendo{background:var(--info);color:#0B1A2E;}
+.badge-abandonado{background:var(--ink-disabled);color:#F2F1ED;}
+.card-body{padding:12px;}
+.card-title{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;margin-bottom:6px;}
+.card-meta{font-size:13px;color:var(--ink-secondary);}
+
+.panel-row{width:1040px;display:flex;flex-direction:column;gap:8px;}
+.panel{background:var(--surface-raised);border-radius:10px;padding:20px 24px;}
+.panel-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.panel-tab{font-size:14px;font-weight:600;color:var(--ink-primary);border-bottom:2px solid var(--accent);padding-bottom:4px;}
+.panel-grid{display:flex;gap:16px;}
+.mini-card{background:var(--surface-sunken);border-radius:10px;overflow:hidden;width:180px;}
+.mini-art{height:70px;position:relative;}
+.mini-body{padding:10px;}
+.mini-title{font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:600;}
+.empty-inline{
+  font-family:'Sora','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:600;color:var(--ink-primary);
+}
+.empty-inline-sub{font-size:13px;color:var(--ink-secondary);margin-top:6px;}
+</style>
+</head>
+<body>
+
+<div class="frame-label">Por Estado — filtro "viendo" (canónico)</div>
+<div class="browser">
+  <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">animetracker.app/por-estado</span></div>
+  <div class="app-nav">
+    <div class="brand">AnimeTracker</div>
+    <div class="nav-links"><span>Hoy</span><span class="active">Por Estado</span><span>Tendencias</span><span>Configurar MAL-Sync</span></div>
+    <div class="theme-toggle"></div>
+  </div>
+  <div class="page">
+    <div class="page-title">Por Estado</div>
+    <div class="tabs">
+      <div class="tab active">Viendo</div>
+      <div class="tab">Planeado</div>
+      <div class="tab">Completado</div>
+      <div class="tab">Abandonado</div>
+      <div class="tab">Repitiendo</div>
+    </div>
+    <div class="grid">
+      <div class="poster-card">
+        <div class="poster-art" style="background:#8A3A2C;"><div class="badge badge-viendo">Viendo</div></div>
+        <div class="card-body"><div class="card-title">Kaiju No. 8</div><div class="card-meta">Visto: Ep 11</div></div>
+      </div>
+      <div class="poster-card">
+        <div class="poster-art" style="background:#3B5B48;"><div class="badge badge-viendo">Viendo</div></div>
+        <div class="card-body"><div class="card-title">Frieren</div><div class="card-meta">Visto: Ep 23</div></div>
+      </div>
+      <div class="poster-card">
+        <div class="poster-art" style="background:#38455F;"><div class="badge badge-viendo">Viendo</div></div>
+        <div class="card-body"><div class="card-title">Dandadan</div><div class="card-meta">Visto: Ep 8</div></div>
+      </div>
+      <div class="poster-card">
+        <div class="poster-art" style="background:#5B3B5F;"><div class="badge badge-viendo">Viendo</div></div>
+        <div class="card-body"><div class="card-title">Solo Leveling</div><div class="card-meta">Visto: Ep 5</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-row">
+  <div class="frame-label">Variantes — resto de los Estados (badge color map + estado vacío)</div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-tab">Completado</span></div>
+    <div class="panel-grid">
+      <div class="mini-card">
+        <div class="mini-art" style="background:#5F4A2E;"><div class="badge badge-completado" style="position:static;display:inline-block;margin:8px;">Completado</div></div>
+        <div class="mini-body"><div class="mini-title">Spy x Family</div></div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-art" style="background:#3E2F2F;"><div class="badge badge-completado" style="position:static;display:inline-block;margin:8px;">Completado</div></div>
+        <div class="mini-body"><div class="mini-title">Chainsaw Man</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-tab">Repitiendo</span></div>
+    <div class="panel-grid">
+      <div class="mini-card">
+        <div class="mini-art" style="background:#2F3E4A;"><div class="badge badge-repitiendo" style="position:static;display:inline-block;margin:8px;">Repitiendo</div></div>
+        <div class="mini-body"><div class="mini-title">One Piece</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-tab">Abandonado</span></div>
+    <div class="panel-grid">
+      <div class="mini-card">
+        <div class="mini-art" style="background:#3A3A3A;"><div class="badge badge-abandonado" style="position:static;display:inline-block;margin:8px;">Abandonado</div></div>
+        <div class="mini-body"><div class="mini-title">Tokyo Ghoul</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-tab">Planeado</span></div>
+    <div class="empty-inline">Nada en <em>planeado</em> por ahora.</div>
+    <div class="empty-inline-sub">Cuando agregues animes a esta lista en AniList, van a aparecer aquí.</div>
+  </div>
+</div>
+
+</body>
+</html>

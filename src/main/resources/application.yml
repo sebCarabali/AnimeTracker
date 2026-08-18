@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: animetracker
+  security:
+    oauth2:
+      client:
+        registration:
+          anilist:
+            client-id: ${ANILIST_CLIENT_ID:placeholder-client-id}
+            client-secret: ${ANILIST_CLIENT_SECRET:placeholder-client-secret}
+            client-authentication-method: post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/anilist"
+            provider: anilist
+        provider:
+          anilist:
+            authorization-uri: https://anilist.co/api/v2/oauth/authorize
+            token-uri: https://anilist.co/api/v2/oauth/token
