@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-18-2026 00:00
-last_updated: 08-19-2026 23:45
+last_updated: 08-20-2026 01:10
 project: AnimeList
 project_key: NOKEY
 tracking_system: file-system
@@ -40,8 +40,8 @@ development_status:
   1-2-gate-de-whitelist-de-invitación: review
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-sincronización-forzada-en-el-login: backlog
+  epic-2: in-progress
+  2-1-sincronización-forzada-en-el-login: review
   2-2-job-periódico-de-sincronización-en-background: backlog
   2-3-degradación-ante-fallo-de-sincronización: backlog
   epic-2-retrospective: optional
