@@ -6,14 +6,27 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.animetracker.domain.AppUserRepository;
 
 /**
  * Cubre los 3 escenarios de la I/O & Edge-Case Matrix de la spec 1.1 sin
@@ -21,12 +34,22 @@ import org.springframework.test.web.servlet.MockMvc;
  * - Happy path: /login es público y el CTA inicia el redirect OAuth oficial.
  * - Falla transitoria de OAuth: el callback sin authorization request previa
  *   en sesión (state/code inválido o ausente) dispara el failureUrl.
- * - Handoff a Story 1.2: el success handler redirige a "/" sin crear nada
- *   más allá de la autenticación de Spring Security.
+ * - Handoff a Story 1.2: el success handler ahora consulta la Whitelist antes
+ *   de redirigir (ver WhitelistGateTest para las 4 filas completas de esa
+ *   I/O Matrix); acá solo se verifica que el handler está bien conectado.
+ *
+ * Desde Story 1.2 el contexto completo de Spring necesita un datasource real
+ * (JPA + Flyway), así que esta clase también levanta Testcontainers Postgres,
+ * igual que WhitelistGateTest.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Testcontainers
 class OAuthLoginFlowTest {
+
+    @Container
+    @ServiceConnection
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,6 +69,19 @@ class OAuthLoginFlowTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("aria-live=\"polite\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
                         "No pudimos completar el inicio de sesión con AniList. Inténtalo de nuevo.")));
+    }
+
+    @Test
+    void accessDeniedPageIsPubliclyReachableThroughTheRealSecurityFilterChain() throws Exception {
+        // A diferencia de WhitelistGateTest (que invoca el handler directo), esto
+        // ejercita de verdad la entrada permitAll de /acceso-denegado en
+        // SecurityConfig: si esa entrada se borrara o se tipeara mal, Spring
+        // Security redirigiría esta request no autenticada a /login en vez de
+        // servir la página dedicada (UX-DR12), y este test fallaría.
+        mockMvc.perform(get("/acceso-denegado"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Tu cuenta de AniList no está habilitada todavía.")));
     }
 
     @Test
@@ -85,15 +121,23 @@ class OAuthLoginFlowTest {
     }
 
     @Test
-    void successHandlerRedirectsToRootWithoutTouchingAppUserOrWhitelist() throws Exception {
-        OAuthLoginSuccessHandler handler = new OAuthLoginSuccessHandler();
+    void successHandlerConsultsTheWhitelistBeforeGrantingAccess(
+            @Autowired OAuthLoginSuccessHandler handler, @Autowired AppUserRepository appUserRepository)
+            throws Exception {
+        // Id de AniList sin fila en whitelisted_user: el handler real (con sus
+        // dependencias JPA reales, wireadas contra el Postgres del container)
+        // debe rechazarlo sin crear un AppUser. La cobertura exhaustiva de las 4
+        // filas de la I/O Matrix de Story 1.2 (AD-5) vive en WhitelistGateTest.
+        long anilistUserId = 424_242L;
+        OAuth2User oAuth2User = new DefaultOAuth2User(Set.of(new SimpleGrantedAuthority("ROLE_USER")),
+                Map.of("id", String.valueOf(anilistUserId), "name", "tester"), "id");
+        Authentication authentication = new OAuth2AuthenticationToken(oAuth2User, oAuth2User.getAuthorities(),
+                "anilist");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        handler.onAuthenticationSuccess(
-                new MockHttpServletRequest(),
-                response,
-                new TestingAuthenticationToken("anilist-viewer-id", null));
+        handler.onAuthenticationSuccess(new MockHttpServletRequest(), response, authentication);
 
-        assertThat(response.getRedirectedUrl()).isEqualTo("/");
+        assertThat(response.getRedirectedUrl()).isEqualTo("/acceso-denegado");
+        assertThat(appUserRepository.findByAnilistUserId(anilistUserId)).isEmpty();
     }
 }
