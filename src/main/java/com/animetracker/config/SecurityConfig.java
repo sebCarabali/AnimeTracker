@@ -10,9 +10,18 @@ import com.animetracker.auth.OAuthLoginSuccessHandler;
 
 /**
  * Única fuente de verdad de la configuración de seguridad de la app.
- * Rutas públicas: /login y estáticos. Todo lo demás requiere autenticación
- * OAuth2 con AniList. El login-page y el failure-url apuntan a /login para
- * que la falla transitoria de OAuth se resuelva en la misma pantalla.
+ * Rutas públicas: /login, /acceso-denegado y estáticos. Todo lo demás
+ * requiere autenticación OAuth2 con AniList. El login-page y el failure-url
+ * apuntan a /login para que la falla transitoria de OAuth se resuelva en la
+ * misma pantalla.
+ *
+ * /acceso-denegado es pública a propósito (Story 1.2, AD-5): aunque Spring
+ * Security ya autenticó al usuario vía OAuth2 en ese punto del flujo,
+ * OAuthLoginSuccessHandler invalida explícitamente esa sesión/SecurityContext
+ * antes de redirigir acá cuando el id de AniList no está en la Whitelist --
+ * un usuario rechazado no debe quedar con una sesión autenticada ("sin
+ * sesión ni fila AppUser" en la I/O Matrix), así que la request que seguirá
+ * al redirect llega sin autenticación.
  */
 @Configuration
 public class SecurityConfig {
@@ -30,7 +39,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/login/**", "/css/**", "/js/**", "/images/**", "/favicon.ico")
+                        .requestMatchers("/login", "/login/**", "/acceso-denegado", "/css/**", "/js/**",
+                                "/images/**", "/favicon.ico")
                         .permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2

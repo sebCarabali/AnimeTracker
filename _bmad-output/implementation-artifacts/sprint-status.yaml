@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-18-2026 00:00
-last_updated: 08-18-2026 00:00
+last_updated: 08-19-2026 23:45
 project: AnimeList
 project_key: NOKEY
 tracking_system: file-system
@@ -37,7 +37,7 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   epic-1: in-progress
   1-1-iniciar-sesión-con-anilist-oauth: review
-  1-2-gate-de-whitelist-de-invitación: backlog
+  1-2-gate-de-whitelist-de-invitación: review
   epic-1-retrospective: optional
 
   epic-2: backlog
