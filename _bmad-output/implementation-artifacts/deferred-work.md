@@ -35,3 +35,23 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-gate-de-whitelist-de-invitacion.md`
   summary: Un usuario ya autenticado y en la Whitelist que navega manualmente a `GET /acceso-denegado` (público por `permitAll`) ve la pantalla de rechazo aunque su acceso siga siendo válido, porque `AccessDeniedController` no inspecciona el estado de autenticación.
   evidence: Surgió en Step 4 (review layers, edge-case-hunter). Inconsistencia de UX menor, no un problema de seguridad (la sesión del usuario no se toca); ninguna AC ni fila de la I/O Matrix cubre esta ruta de navegación directa.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-sincronizacion-forzada-en-el-login.md`
+  summary: `AniListMediaListClient` (y `AniListViewerClient`, preexistente) no parsean el array `errors` de una respuesta GraphQL 200; cualquier falla de AniList que no sea un 4xx/5xx cae a un `IllegalStateException` genérico sin detalle accionable para logging/debug.
+  evidence: Surgió en Step 4 (review layers, blind-hunter). Patrón preexistente desde Story 1.1 (`AniListViewerClient` tiene la misma limitación); no bloqueante para Story 2.1, pero amerita una pasada de consistencia sobre ambos clientes de AniList.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-sincronizacion-forzada-en-el-login.md`
+  summary: El endpoint GraphQL y los timeouts connect/read de `AniListMediaListClient` (y `AniListViewerClient`) están hardcodeados como constantes en vez de externalizados vía `application.yml`.
+  evidence: Surgió en Step 4 (review layers, blind-hunter). Mismo patrón preexistente desde Story 1.1; no bloqueante, revisar si se necesita tunear por ambiente sin redeploy.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-sincronizacion-forzada-en-el-login.md`
+  summary: `SyncService.syncUser` no tiene protección ante dos corridas concurrentes para el mismo usuario (p.ej. doble login casi simultáneo): ambas transacciones pueden leer el mismo estado antes de que cualquiera escriba y colisionar en el `UNIQUE(app_user_id, anilist_media_id)`.
+  evidence: Surgió en Step 4 (review layers, blind-hunter + edge-case-hunter). Se degrada con gracia hoy (el catch en `OAuthLoginSuccessHandler.syncOnLoginBestEffort` loggea y el login sigue igual, sin romper nada), a diferencia de la carrera de primer-login de `AppUser` que sí tiene un patrón `REQUIRES_NEW` dedicado. Ventana angosta, no bloqueante para V1, pero amerita el mismo tipo de solución si se vuelve un problema real.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-sincronizacion-forzada-en-el-login.md`
+  summary: La query `MediaListCollection` no pagina (`perChunk`/`chunk`); AniList recomienda queries paginadas para listas muy grandes.
+  evidence: Surgió en Step 4 (review layers, blind-hunter). No es un problema a la escala objetivo (~100-1000 usuarios, listas personales de anime), pero revisar si el tamaño de lista de algún usuario crece lo suficiente como para acercarse a límites de tamaño de respuesta de AniList.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-sincronizacion-forzada-en-el-login.md`
+  summary: Los FKs de `V2__create_tracking_entry_and_snapshot.sql` (`tracking_entry.app_user_id`, `snapshot.tracking_entry_id`) no especifican comportamiento `ON DELETE`; borrar un `AppUser` fallaría hoy por violación de FK.
+  evidence: Surgió en Step 4 (review layers, blind-hunter). Irrelevante hoy porque no existe ninguna feature de borrado de cuenta en el producto; revisar cuando esa feature se planee.
